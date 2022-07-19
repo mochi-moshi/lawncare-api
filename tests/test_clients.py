@@ -143,20 +143,6 @@ def test_get_client_implicit(client: TestClient, session: TestSessionLocal, clie
     assert schemas.ClientPublic(**json) == schemas.ClientPublic(**client_data.dict())
     
 @pytest.mark.parametrize("client_data", sample_good_client_input)
-def test_get_client_explicit(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
-    new_client = add_sample_client(session, client_data)
-    token = create_access_token({"client_id":new_client.id})
-    client.headers = {
-        **client.headers,
-        "Authorization": f"Bearer {token}"
-    }
-    response = client.get(f'/client/{new_client.id}')
-    assert response.status_code == status.HTTP_200_OK
-    json = response.json()
-    assert json
-    assert schemas.ClientPublic(**json) == schemas.ClientPublic(**client_data.dict())
-    
-@pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_get_client_fail(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
     new_client = add_sample_client(session, client_data)
     token = create_access_token({"client_id":new_client.id})
@@ -179,19 +165,6 @@ def test_delete_client_implicit(client: TestClient, session: TestSessionLocal, c
         "Authorization": f"Bearer {token}"
     }
     response = client.delete('/client/')
-    assert response.status_code == status.HTTP_200_OK
-    queried_client = session.query(models.Client).filter(models.Client.id == 1).first()
-    assert not queried_client
-    
-@pytest.mark.parametrize("client_data", sample_good_client_input)
-def test_delete_client_explicit(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
-    new_client = add_sample_client(session, client_data)
-    token = create_access_token({"client_id":new_client.id})
-    client.headers = {
-        **client.headers,
-        "Authorization": f"Bearer {token}"
-    }
-    response = client.delete(f'/client/{new_client.id}')
     assert response.status_code == status.HTTP_200_OK
     queried_client = session.query(models.Client).filter(models.Client.id == 1).first()
     assert not queried_client
