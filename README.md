@@ -1,4 +1,4 @@
 # lawncare-fullstack
 
 ### Launch api:  
-    uvicorn app.main:app --reload
+    uvicorn app:app --reload
