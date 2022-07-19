@@ -65,7 +65,7 @@ sample_bad_client_input: List[schemas.POSTClientInput] = [schemas.POSTClientInpu
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_create_client(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
     response = client.post(
-        '/client/',
+        '/client',
         json = client_data.dict()
     )
     assert response.status_code == status.HTTP_201_CREATED
@@ -80,7 +80,7 @@ def test_create_client(client: TestClient, session: TestSessionLocal, client_dat
 @pytest.mark.parametrize("client_data", sample_bad_client_input)
 def test_create_client_bad(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
     response = client.post(
-        '/client/',
+        '/client',
         json = client_data.dict()
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
@@ -89,7 +89,7 @@ def test_create_client_bad(client: TestClient, session: TestSessionLocal, client
 def test_create_duplicate_client(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
     add_sample_client(session, client_data)
     response = client.post(
-        '/client/',
+        '/client',
         json = client_data.dict()
     )
     assert response.status_code == status.HTTP_409_CONFLICT
@@ -145,16 +145,11 @@ def test_get_client_implicit(client: TestClient, session: TestSessionLocal, clie
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_get_client_fail(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
     new_client = add_sample_client(session, client_data)
-    token = create_access_token({"client_id":new_client.id})
-    client.headers = {
-        **client.headers,
-        "Authorization": f"Bearer {token}"
-    }
-    response = client.get(f'/client/2')
+    response = client.get(f'/client')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     json = response.json()
     assert json
-    assert json.get("detail") == f'Cannot access client id: 2'
+    assert json.get("detail") == f'Not authenticated'
     
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_delete_client_implicit(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
@@ -164,7 +159,7 @@ def test_delete_client_implicit(client: TestClient, session: TestSessionLocal, c
         **client.headers,
         "Authorization": f"Bearer {token}"
     }
-    response = client.delete('/client/')
+    response = client.delete('/client')
     assert response.status_code == status.HTTP_200_OK
     queried_client = session.query(models.Client).filter(models.Client.id == 1).first()
     assert not queried_client
@@ -172,13 +167,8 @@ def test_delete_client_implicit(client: TestClient, session: TestSessionLocal, c
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_delete_client_fail(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
     new_client = add_sample_client(session, client_data)
-    token = create_access_token({"client_id":new_client.id})
-    client.headers = {
-        **client.headers,
-        "Authorization": f"Bearer {token}"
-    }
-    response = client.delete(f'/client/2')
+    response = client.delete(f'/client')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     json = response.json()
     assert json
-    assert json.get("detail") == f'Cannot remove client id: 2'
+    assert json.get("detail") == f'Not authenticated'
