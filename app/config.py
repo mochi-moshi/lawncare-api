@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     database_address: str
     database_port: str
     database_name: str
+    database_driver: str
 
     token_secret: str
     token_algorithm: str

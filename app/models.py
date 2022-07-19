@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String
 from sqlalchemy.sql.sqltypes import TIMESTAMP
 from sqlalchemy.sql.expression import text
-from .database import Base, engine
+from .database import Base
 
 class Client(Base):
     __tablename__ = 'clients'
@@ -13,6 +13,3 @@ class Client(Base):
     phone_number = Column(String(length=10), nullable=False)
     password = Column(String, nullable=False)
     address = Column(String, nullable=False)
-
-
-Base.metadata.create_all(bind=engine)
