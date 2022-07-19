@@ -3,7 +3,7 @@ from sqlalchemy.orm import Session
 from .. import models, schemas, utils
 from ..database import get_db
 
-router = APIRouter('/client')
+router = APIRouter(prefix='/client')
 
 @router.post('/', status_code=status.HTTP_201_CREATED)
 def create_client(client: schemas.POSTClientInput, db: Session = Depends(get_db)):
