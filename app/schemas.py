@@ -1,14 +1,14 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr
 
-class POSTClientInput(BaseModel):
+class ClientPublic(BaseModel):
     name: str
-    email: str
+    email: EmailStr
     phone_number: str
+    address: str
+
+class POSTClientInput(ClientPublic):
     password: str
-    address: str
 
-class GETClientReturn(BaseModel):
-    name: str
-    email: str
-    phone_number: str
-    address: str
+class GETClientReturn(ClientPublic):
+    class Config:
+        orm_mode = True
