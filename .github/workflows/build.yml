@@ -1,6 +1,6 @@
 name: Build Code
 
-on: [push, pull_request]
+on: [push]
 
 jobs:
   build:
@@ -12,9 +12,9 @@ jobs:
       DATABASE_PASSWORD: ${{secrets.DATABASE_PASSWORD}}
       DATABASE_NAME: ${{secrets.DATABASE_NAME}}
       DATABASE_USERNAME: ${{secrets.DATABASE_USERNAME}}
-      SECRET_KEY: ${{secrets.SECRET_KEY}}
-      ALGORITHM: ${{secrets.ALGORITHM}}
-      ACCESS_TOKEN_EXPIRE_MINUTES: ${{secrets.ACCESS_TOKEN_EXPIRE_MINUTES}}
+      TOKEN_SECRET: ${{secrets.TOKEN_SECRET}}
+      TOKEN_ALGORITHM: ${{secrets.TOKEN_ALGORITHM}}
+      TOKEN_EXPIRE_SECONDS: ${{secrets.TOKEN_EXPIRE_SECONDS}}
 
     services:
       postgres:
