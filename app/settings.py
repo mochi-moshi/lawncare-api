@@ -7,6 +7,10 @@ class Settings(BaseSettings):
     database_port: str
     database_name: str
 
+    token_secret: str
+    token_algorithm: str
+    token_expire_seconds: int
+
     class Config:
         env_file = '.env'
 
