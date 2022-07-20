@@ -16,6 +16,8 @@ jobs:
       TOKEN_SECRET: ${{secrets.TOKEN_SECRET}}
       TOKEN_ALGORITHM: ${{secrets.TOKEN_ALGORITHM}}
       TOKEN_EXPIRE_SECONDS: ${{secrets.TOKEN_EXPIRE_SECONDS}}
+      ADMIN_USERNAME: ${{secrets.ADMIN_USERNAME}}
+      ADMIN_PASSWORD: ${{secrets.ADMIN_PASSWORD}}
 
     services:
       postgres:
