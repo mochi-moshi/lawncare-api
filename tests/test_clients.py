@@ -54,13 +54,14 @@ sample_bad_client_data = [
 ]
 
 sample_good_client_input: List[schemas.POSTClientInput] = [schemas.POSTClientInput(**d) for d in sample_good_client_data]
+sample_bad_client_input: List[schemas.POSTClientInput] = [schemas.POSTClientInput(**d) for d in sample_bad_client_data]
+
 def add_sample_client(session, client_data):
     new_client = models.Client(**client_data.dict())
     new_client.password = utils.hash(new_client.password)
     session.add(new_client)
     session.commit()
     return new_client
-sample_bad_client_input: List[schemas.POSTClientInput] = [schemas.POSTClientInput(**d) for d in sample_bad_client_data]
 
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_create_client(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):

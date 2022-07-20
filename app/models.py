@@ -20,9 +20,20 @@ class Appointment(Base):
 
     id = Column(Integer, primary_key=True, nullable=False)
     date = Column(Date, nullable=False)
-    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
     description = Column(String, server_default='', nullable=False)
     price = Column(Float, nullable=False)
     paid = Column(Boolean, server_default='f', nullable=False)
 
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
+    client = relationship('Client')
+
+class Request(Base):
+    __tablename__ = 'requests'
+
+    id = Column(Integer, primary_key=True, nullable=False)
+    date_made = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    email = Column(String, unique=True, nullable=False)
+    description = Column(String, server_default='', nullable=False)
+    
+    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'))
     client = relationship('Client')
