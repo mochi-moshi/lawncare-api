@@ -25,6 +25,7 @@ class AppointmentPublic(BaseModel):
 class POSTAppointmentInput(AppointmentPublic):
     date: int
     paid: Optional[bool]
+    client_id: int
 
 class GETAppointmentReturn(AppointmentPublic):
     id: int

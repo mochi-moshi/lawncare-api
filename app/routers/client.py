@@ -30,21 +30,38 @@ def create_client(client: schemas.POSTClientInput, db: Session = Depends(get_db)
     return Response(status_code=status.HTTP_201_CREATED)
 
 @router.get('', response_model=schemas.GETClientReturn)
-def get_client(db: Session = Depends(get_db), current_client: models.Client = Depends(oauth2.get_current_client)):
+def get_client(id: int = None, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
     '''
     Gets the  'public' information
     '''
-    return current_client
+    if auth_token.id != '0':
+        if not (id is None):
+            raise HTTPException(status.HTTP_403_FORBIDDEN)
+        id = int(auth_token.id)
+    if id is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Need to specify client to get')
+    
+    client = db.query(models.Client).filter(models.Client.id == id).first()
+    if not client:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f'Client with id: {id} does not exist')
+    return client
 
 @router.delete('', status_code=status.HTTP_200_OK)
-def delete_client(db: Session = Depends(get_db), current_client: models.Client = Depends(oauth2.get_current_client)):
+def delete_client(id:int = None, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
     '''
     Removes the client from the database
     '''
-    # TODO: differentiate between admin removal and personal removal
-    client_query = db.query(models.Client).filter(models.Client.id == current_client.id)
+    if auth_token.id != '0':
+        if not (id is None):
+            raise HTTPException(status.HTTP_403_FORBIDDEN, 'Cannot delete client of different id')
+        id = int(auth_token.id)
+    if id is None:
+        raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Need to specify client to delete')
+    client_query = db.query(models.Client).filter(models.Client.id == id)
     if not client_query.first():
         raise HTTPException(status.HTTP_404_NOT_FOUND, f'Client with id: {id} does not exist')
+    
+    # TODO: add email notification
     client_query.delete(synchronize_session=False)
     db.commit()
     return Response(status_code=status.HTTP_200_OK)

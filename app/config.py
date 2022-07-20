@@ -12,6 +12,9 @@ class Settings(BaseSettings):
     token_algorithm: str
     token_expire_seconds: int
 
+    admin_username: str
+    admin_password: str
+
     class Config:
         env_file = '.env'
 

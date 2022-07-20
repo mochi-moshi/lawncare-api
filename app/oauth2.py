@@ -20,21 +20,20 @@ def create_access_token(data: dict) -> str:
     
     return jwt.encode(data_copy, SECRET_KEY, algorithm=ALGORITHM)
 
-def verify_access_token(token: str, exception) -> schemas.TokenData:
+def verify_access_token(token: str = Depends(oauth2_scheme)) -> schemas.TokenData:
     try:
         data: dict = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
         id: str = data.get("client_id")
         if id is None:
-            raise exception
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Could not validate credentials", headers={"WWW-Authenticate":"Bearer"})
         return schemas.TokenData(id=id)
     except JWTError:
-        raise exception
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Could not validate credentials", headers={"WWW-Authenticate":"Bearer"})
 
 def get_current_client(token: str = Depends(oauth2_scheme), db: Session = Depends(database.get_db)):
-    cred_exception = HTTPException(status.HTTP_401_UNAUTHORIZED, "Could not validate credentials", headers={"WWW-Authenticate":"Bearer"})
-    token = verify_access_token(token, cred_exception)
+    token = verify_access_token(token)
     client = db.query(models.Client).filter(models.Client.id == token.id).first()
     if not client:
-        raise cred_exception
+        raise HTTPException(status.HTTP_401_UNAUTHORIZED, "Could not validate credentials", headers={"WWW-Authenticate":"Bearer"})
     return client
     
