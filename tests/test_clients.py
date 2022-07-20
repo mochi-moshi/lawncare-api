@@ -112,7 +112,7 @@ def test_login_client(client: TestClient, session: TestSessionLocal, client_data
     assert response.status_code == status.HTTP_202_ACCEPTED
     json = response.json()
     assert json
-    assert verify_access_token(json.get('access_token'), Exception("Could not validate credentials"))
+    assert verify_access_token(json.get('access_token'))
     assert json.get('token_type') == 'bearer'
 
 def test_login_no_client(client: TestClient, session: TestSessionLocal):
