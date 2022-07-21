@@ -1,6 +1,9 @@
 from pydantic import BaseModel, EmailStr, constr
 from typing import Optional
-import re
+
+PASSWORD_CONSTRAINT = constr(
+        min_length=8
+    )
 
 class ClientPublic(BaseModel):
     name: constr(
@@ -18,9 +21,7 @@ class ClientPublic(BaseModel):
     )
 
 class POSTClientInput(ClientPublic):
-    password: constr(
-        min_length=8
-    )
+    password: PASSWORD_CONSTRAINT
 
 class GETClientReturn(ClientPublic):
     class Config:
@@ -28,7 +29,7 @@ class GETClientReturn(ClientPublic):
 
 class POSTClientLogin(BaseModel):
     email: EmailStr
-    password: str
+    password: PASSWORD_CONSTRAINT
 
 class AppointmentPublic(BaseModel):
     description: str
@@ -36,7 +37,7 @@ class AppointmentPublic(BaseModel):
     
 class POSTAppointmentInput(AppointmentPublic):
     date: int
-    paid: Optional[bool]
+    paid: Optional[bool] = False
     client_id: int
 
 class GETAppointmentReturn(AppointmentPublic):
@@ -51,4 +52,6 @@ class Token(BaseModel):
     token_type: str
 
 class TokenData(BaseModel):
-    id: Optional[str] = None
+    client_id: str
+    host: str
+    testing: str = 'False'

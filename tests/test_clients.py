@@ -90,7 +90,6 @@ def test_client_login(client: TestClient, session: TestSessionLocal, sample_clie
     json = response.json()
     assert json
     assert verify_access_token(json.get('access_token'))
-    assert json.get('token_type') == 'bearer'
 
 def test_client_login_does_not_exist(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     response = client.post(
@@ -108,7 +107,7 @@ def test_client_login_does_not_exist(client: TestClient, session: TestSessionLoc
     
 def test_client_get(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     new_client = add_client(sample_client_data, session)
-    token = create_access_token({"client_id":new_client.id})
+    token = create_access_token({"client_id":new_client.id, "host":utils.hash('localhost', 5432), "testing": "True"})
     client.headers = {
         **client.headers,
         "Authorization": f"Bearer {token}"
@@ -128,7 +127,7 @@ def test_client_get_fail(client: TestClient, session: TestSessionLocal, sample_c
     assert json.get("detail") == f'Not authenticated'
     
 def test_client_delete(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
-    token = create_access_token({"client_id":sample_client.id})
+    token = create_access_token({"client_id":sample_client.id, "host":utils.hash('localhost', 5432), "testing": "True"})
     client.headers = {
         **client.headers,
         "Authorization": f"Bearer {token}"
@@ -161,11 +160,11 @@ def test_admin_login(client: TestClient, session: TestSessionLocal):
     assert json
     assert json.get('token_type') == 'bearer'
     token = verify_access_token(json.get('access_token'))
-    assert token.id == '0'
+    assert token.client_id == '0'
     
 def test_admin_get_client(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     new_client = add_client(sample_client_data, session)
-    token = create_access_token({"client_id":0})
+    token = create_access_token({"client_id":0, "host":utils.hash('localhost', 5432), "testing": "True"})
     client.headers = {
         **client.headers,
         "Authorization": f"Bearer {token}"
@@ -181,7 +180,7 @@ def test_admin_get_client(client: TestClient, session: TestSessionLocal, sample_
     assert schemas.ClientPublic(**json) == schemas.ClientPublic(**sample_client_data)
     
 def test_admin_delete_client(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
-    token = create_access_token({"client_id":0})
+    token = create_access_token({"client_id":0, "host":utils.hash('localhost', 5432), "testing": "True"})
     client.headers = {
         **client.headers,
         "Authorization": f"Bearer {token}"

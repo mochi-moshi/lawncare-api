@@ -1,10 +1,9 @@
-from fastapi import Depends, HTTPException, status, Response, APIRouter
+from fastapi import Depends, HTTPException, status, Response, APIRouter, Request
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
 from app import oauth2
 from .. import models, schemas, utils
 from ..database import get_db
-import app
 
 router = APIRouter(
     prefix='/appointment',
@@ -12,12 +11,13 @@ router = APIRouter(
     )
 
 @router.get('', status_code=status.HTTP_200_OK)
-def get_appointments(client_id: int = None, appointment_id: int = None, before: int = None, after: str = None, paid: bool = False, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
-
-    if auth_token.id != '0':
+def get_appointments(request: Request, client_id: int = None, appointment_id: int = None, before: int = None, after: str = None, paid: bool = False, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
+    if auth_token.testing != 'True':
+        oauth2.validate_access_token(request.host, request.port, auth_token)
+    if auth_token.client_id != '0':
         if utils.is_set(client_id):
             raise HTTPException(status.HTTP_403_FORBIDDEN, 'Cannot get appointments from client of different id')
-        client_id = int(auth_token.id)
+        client_id = int(auth_token.client_id)
         
     if not utils.is_set(client_id):
         raise HTTPException(status.HTTP_400_BAD_REQUEST, 'Need to specify client to get appointments from')
@@ -41,10 +41,11 @@ def get_appointments(client_id: int = None, appointment_id: int = None, before: 
     return appointments.all()
 
 @router.post('', status_code=status.HTTP_201_CREATED, response_model=schemas.GETAppointmentReturn)
-def make_appointment(appointment_data: schemas.POSTAppointmentInput, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
-
+def make_appointment(request: Request, appointment_data: schemas.POSTAppointmentInput, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
+    if auth_token.testing != 'True':
+        oauth2.validate_access_token(request.host, request.port, auth_token)
     # Admin access
-    if auth_token.id != '0':
+    if auth_token.client_id != '0':
         raise HTTPException(status.HTTP_403_FORBIDDEN)
     
     # TODO: add email notification
@@ -75,8 +76,13 @@ def make_appointment(appointment_data: schemas.POSTAppointmentInput, db: Session
     return _data
 
 @router.delete('', status_code=status.HTTP_200_OK)
-def cancel_appointment(id: int, db: Session = Depends(get_db), current_client: models.Client = Depends(oauth2.get_current_client)):
-    appointment = db.query(models.Appointment).filter(models.Appointment.client_id == current_client.id).filter(models.Appointment.id == id)
+def cancel_appointment(request: Request, id: int, db: Session = Depends(get_db), auth_token: schemas.TokenData = Depends(oauth2.verify_access_token)):
+    if auth_token.testing != 'True':
+        oauth2.validate_access_token(request.host, request.port, auth_token)
+    client = db.query(models.Client).filter(models.Client.id == auth_token.client_id).first()
+    if not client:
+        raise HTTPException(status.HTTP_404_NOT_FOUND, f'Client with id: {auth_token.client_id} does not exists')
+    appointment = db.query(models.Appointment).filter(models.Appointment.client_id == auth_token.id).filter(models.Appointment.id == id)
     if appointment.first():
         # TODO: add email notification
         appointment.delete(synchronize_session=False)
