@@ -1,60 +1,31 @@
+import pydantic
 from app.oauth2 import create_access_token, verify_access_token
 from fastapi import status
 from app import models, utils, schemas
 import pytest
 from .database import client, session, TestSessionLocal, TestClient
 from typing import List
+from faker import Faker
 
-sample_good_client_data = [
-    {
-        'name'         : "John Doe",
-        'email'        : "example@email.com",
-        'password'     : "password123",
-        'phone_number' : "1234567890",
-        'address'      : "123 Street Rd., City"
-    },
-    {
-        'name'         : "Jane Doe",
-        'email'        : "example2@email.com",
-        'password'     : "adsfasdfhasdasdfga",
-        'phone_number' : "1234567890",
-        'address'      : "123 Street Rd., City"
-    }
-]
+en_US_faker = Faker()['en_US']
 
-sample_bad_client_data = [
-    {
-        'name'         : "",
-        'email'        : "example@email.com",
-        'password'     : "password123",
-        'phone_number' : "1234567890",
-        'address'      : "123 Street Rd., City"
-    },
-    {
-        'name'         : "John Doe",
-        'email'        : "example@email.com",
-        'password'     : "",
-        'phone_number' : "1234567890",
-        'address'      : "123 Street Rd., City"
-    },
-    {
-        'name'         : "Jane Doe",
-        'email'        : "example2@email.com",
-        'password'     : "adsfasdfhasdasdfga",
-        'phone_number' : "drop tables users;",
-        'address'      : "123 Street Rd., City"
-    },
-    {
-        'name'         : "John Doe",
-        'email'        : "example@email.com",
-        'password'     : "password123",
-        'phone_number' : "1234567890",
-        'address'      : ""
-    }
-]
+def generate_sample_good_client_data():
+    data = []
+    for _ in range(5):
+        person = en_US_faker.simple_profile()
+        data.append({
+            "name": person['name'],
+            "email": person['mail'],
+            "address": person['address'],
+            "password": en_US_faker.password(),
+            "phone_number": en_US_faker.phone_number()
+        })
+    return data
 
-sample_good_client_input: List[schemas.POSTClientInput] = [schemas.POSTClientInput(**d) for d in sample_good_client_data]
-sample_bad_client_input: List[schemas.POSTClientInput] = [schemas.POSTClientInput(**d) for d in sample_bad_client_data]
+sample_good_client_input: List[schemas.POSTClientInput] = [
+    schemas.POSTClientInput(**d)
+    for d in generate_sample_good_client_data()
+    ]
 
 def add_sample_client(session, client_data):
     new_client = models.Client(**client_data.dict())
@@ -62,6 +33,39 @@ def add_sample_client(session, client_data):
     session.add(new_client)
     session.commit()
     return new_client
+
+@pytest.mark.parametrize('element', ('name', 'email', 'address', 'password', 'phone_number'))
+def test_non_null_post_data(client: TestClient, session: TestSessionLocal, element: str): 
+    person = en_US_faker.simple_profile()
+    data = {
+        "name": person['name'],
+        "email": person['mail'],
+        "address": person['address'],
+        "password": en_US_faker.password(),
+        "phone_number": en_US_faker.phone_number()
+    }
+    data[element] = ''
+    with pytest.raises(pydantic.error_wrappers.ValidationError):
+        schemas.POSTClientInput(**data)
+        
+@pytest.mark.parametrize('element', ('name', 'email', 'address', 'password', 'phone_number'))
+def test_post_data_constraints(client: TestClient, session: TestSessionLocal, element: str):
+    person = en_US_faker.simple_profile()
+    data = {
+        "name": person['name'],
+        "email": person['mail'],
+        "address": person['address'],
+        "password": en_US_faker.password(),
+        "phone_number": en_US_faker.phone_number()
+    }
+    if element == 'name':
+        data[element] = en_US_faker.pystr(max_chars=2)
+    elif element == 'address' or element == 'password':
+        data[element] = en_US_faker.pystr(max_chars=7)
+    else:
+        data[element] = en_US_faker.pystr()
+    with pytest.raises(pydantic.error_wrappers.ValidationError):
+        schemas.POSTClientInput(**data)
 
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_create_client(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
@@ -77,14 +81,6 @@ def test_create_client(client: TestClient, session: TestSessionLocal, client_dat
     assert utils.verify(client_data.password, client_query_data.password)
     assert client_data.phone_number == client_query_data.phone_number
     assert client_data.address == client_query_data.address
-
-@pytest.mark.parametrize("client_data", sample_bad_client_input)
-def test_create_client_bad(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):
-    response = client.post(
-        '/client',
-        json = client_data.dict()
-    )
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
 
 @pytest.mark.parametrize("client_data", sample_good_client_input)
 def test_create_duplicate_client(client: TestClient, session: TestSessionLocal, client_data: schemas.POSTClientInput):

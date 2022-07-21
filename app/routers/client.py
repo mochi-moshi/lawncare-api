@@ -20,9 +20,6 @@ def create_client(client: schemas.POSTClientInput, db: Session = Depends(get_db)
     if client_exists:
         raise HTTPException(status.HTTP_409_CONFLICT, "Email address in use")
 
-    if client.name == "" or client.address == "" or client.phone_number == "" or client.password == "" or len(client.phone_number) != 10:
-        raise HTTPException(status.HTTP_400_BAD_REQUEST, "Data format invalid")
-
     client.password = utils.hash(client.password)
     new_client = models.Client(**client.dict())
     db.add(new_client)

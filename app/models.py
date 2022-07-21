@@ -11,7 +11,7 @@ class Client(Base):
     date_joined = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
-    phone_number = Column(String(length=10), nullable=False)
+    phone_number = Column(String(length=22), nullable=False)
     password = Column(String, nullable=False)
     address = Column(String, nullable=False)
 
