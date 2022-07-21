@@ -35,13 +35,13 @@ def sample_client(sample_client_data, session):
     return add_client(sample_client_data, session)
 
 @pytest.mark.parametrize('element', ('name', 'email', 'address', 'password', 'phone_number'))
-def test_non_null_post_data(client: TestClient, session: TestSessionLocal, element: str, sample_client_data: dict): 
+def test_client_post_data_non_null(client: TestClient, session: TestSessionLocal, element: str, sample_client_data: dict): 
     sample_client_data[element] = ''
     with pytest.raises(pydantic.error_wrappers.ValidationError):
         schemas.POSTClientInput(**sample_client_data)
         
 @pytest.mark.parametrize('element', ('name', 'email', 'address', 'password', 'phone_number'))
-def test_post_data_constraints(client: TestClient, session: TestSessionLocal, element: str, sample_client_data: dict):
+def test_client_post_data_constraints(client: TestClient, session: TestSessionLocal, element: str, sample_client_data: dict):
     if element == 'name':
         sample_client_data[element] = en_US_faker.pystr(max_chars=2)
     elif element == 'address' or element == 'password':
@@ -51,7 +51,7 @@ def test_post_data_constraints(client: TestClient, session: TestSessionLocal, el
     with pytest.raises(pydantic.error_wrappers.ValidationError):
         schemas.POSTClientInput(**sample_client_data)
 
-def test_create_client(client: TestClient, session: TestSessionLocal, sample_client_POST: schemas.POSTClientInput):
+def test_client_create(client: TestClient, session: TestSessionLocal, sample_client_POST: schemas.POSTClientInput):
     response = client.post(
         '/client',
         json = sample_client_POST.dict()
@@ -65,7 +65,7 @@ def test_create_client(client: TestClient, session: TestSessionLocal, sample_cli
     assert sample_client_POST.phone_number == client_query_data.phone_number
     assert sample_client_POST.address == client_query_data.address
 
-def test_create_duplicate_client(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+def test_client_create_duplicate(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     add_client(sample_client_data, session)
     response = client.post(
         '/client',
@@ -76,7 +76,7 @@ def test_create_duplicate_client(client: TestClient, session: TestSessionLocal, 
     assert json
     assert json.get('detail') == 'Email address in use'
     
-def test_login_client(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+def test_client_login(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     add_client(sample_client_data, session)
     response = client.post(
         '/auth/login',
@@ -92,7 +92,7 @@ def test_login_client(client: TestClient, session: TestSessionLocal, sample_clie
     assert verify_access_token(json.get('access_token'))
     assert json.get('token_type') == 'bearer'
 
-def test_login_no_client(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+def test_client_login_does_not_exist(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     response = client.post(
         '/auth/login',
         data =
@@ -106,7 +106,7 @@ def test_login_no_client(client: TestClient, session: TestSessionLocal, sample_c
     assert json
     assert json.get('detail') == 'Invalid Credentials'
     
-def test_get_client_implicit(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+def test_client_get(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     new_client = add_client(sample_client_data, session)
     token = create_access_token({"client_id":new_client.id})
     client.headers = {
@@ -119,7 +119,7 @@ def test_get_client_implicit(client: TestClient, session: TestSessionLocal, samp
     assert json
     assert schemas.ClientPublic(**json) == schemas.ClientPublic(**sample_client_data)
     
-def test_get_client_fail(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+def test_client_get_fail(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     add_client(sample_client_data, session)
     response = client.get(f'/client')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
@@ -127,7 +127,7 @@ def test_get_client_fail(client: TestClient, session: TestSessionLocal, sample_c
     assert json
     assert json.get("detail") == f'Not authenticated'
     
-def test_delete_client_implicit(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
+def test_client_delete(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
     token = create_access_token({"client_id":sample_client.id})
     client.headers = {
         **client.headers,
@@ -138,7 +138,7 @@ def test_delete_client_implicit(client: TestClient, session: TestSessionLocal, s
     queried_client = session.query(models.Client).filter(models.Client.id == 1).first()
     assert not queried_client
     
-def test_delete_client_fail(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
+def test_client_delete_fail(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
     response = client.delete(f'/client')
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
     json = response.json()
@@ -147,7 +147,7 @@ def test_delete_client_fail(client: TestClient, session: TestSessionLocal, sampl
 
 # ADMIN TESTS
 
-def test_login_admin(client: TestClient, session: TestSessionLocal):
+def test_admin_login(client: TestClient, session: TestSessionLocal):
     response = client.post(
         '/auth/login',
         data =
@@ -163,7 +163,7 @@ def test_login_admin(client: TestClient, session: TestSessionLocal):
     token = verify_access_token(json.get('access_token'))
     assert token.id == '0'
     
-def test_get_client_explicit_admin(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+def test_admin_get_client(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
     new_client = add_client(sample_client_data, session)
     token = create_access_token({"client_id":0})
     client.headers = {
@@ -180,7 +180,7 @@ def test_get_client_explicit_admin(client: TestClient, session: TestSessionLocal
     assert json
     assert schemas.ClientPublic(**json) == schemas.ClientPublic(**sample_client_data)
     
-def test_delete_client_explicit_admin(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
+def test_admin_delete_client(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
     token = create_access_token({"client_id":0})
     client.headers = {
         **client.headers,
