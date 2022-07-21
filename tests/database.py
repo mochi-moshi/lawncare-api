@@ -1,12 +1,15 @@
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
-from app import app
+from app import app, utils
 from app.config import settings
 from app.database import Base, get_db
 import pytest
 
 SQLALCHEMY_DATABASE_URL = f'postgresql://{settings.database_username}:{settings.database_password}@{settings.database_address}:{settings.database_port}/{settings.database_name}_test'
+
+settings.admin_username = settings.testing_admin_username
+settings.admin_password = utils.hash(settings.testing_admin_password)
 
 engine = create_engine(SQLALCHEMY_DATABASE_URL)
 

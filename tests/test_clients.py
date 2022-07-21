@@ -1,11 +1,9 @@
-import py
 import pydantic
 from app.oauth2 import create_access_token, verify_access_token
 from fastapi import status
-from app import models, utils, schemas
+from app import models, utils, schemas, config
 import pytest
 from .database import client, session, TestSessionLocal, TestClient
-from typing import List
 from faker import Faker
 
 en_US_faker = Faker()['en_US']
@@ -146,3 +144,53 @@ def test_delete_client_fail(client: TestClient, session: TestSessionLocal, sampl
     json = response.json()
     assert json
     assert json.get("detail") == f'Not authenticated'
+
+# ADMIN TESTS
+
+def test_login_admin(client: TestClient, session: TestSessionLocal):
+    response = client.post(
+        '/auth/login',
+        data =
+        {
+            "username": config.settings.testing_admin_username,
+            "password": config.settings.testing_admin_password
+        }
+    )
+    assert response.status_code == status.HTTP_202_ACCEPTED
+    json = response.json()
+    assert json
+    assert json.get('token_type') == 'bearer'
+    token = verify_access_token(json.get('access_token'))
+    assert token.id == '0'
+    
+def test_get_client_explicit_admin(client: TestClient, session: TestSessionLocal, sample_client_data: dict):
+    new_client = add_client(sample_client_data, session)
+    token = create_access_token({"client_id":0})
+    client.headers = {
+        **client.headers,
+        "Authorization": f"Bearer {token}"
+    }
+    response = client.get(
+        '/client',
+        params = {
+            "id":new_client.id
+        })
+    assert response.status_code == status.HTTP_200_OK
+    json = response.json()
+    assert json
+    assert schemas.ClientPublic(**json) == schemas.ClientPublic(**sample_client_data)
+    
+def test_delete_client_explicit_admin(client: TestClient, session: TestSessionLocal, sample_client: models.Client):
+    token = create_access_token({"client_id":0})
+    client.headers = {
+        **client.headers,
+        "Authorization": f"Bearer {token}"
+    }
+    response = client.delete(
+        '/client',
+        params = {
+            "id":sample_client.id
+        })
+    assert response.status_code == status.HTTP_200_OK
+    queried_client = session.query(models.Client).filter(models.Client.id == 1).first()
+    assert not queried_client

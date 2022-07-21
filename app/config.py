@@ -15,6 +15,9 @@ class Settings(BaseSettings):
     admin_username: str
     admin_password: str
 
+    testing_admin_username: str = 'admin'
+    testing_admin_password: str = 'admin'
+
     class Config:
         env_file = '.env'
 
