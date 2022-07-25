@@ -1,5 +1,6 @@
 from pydantic import BaseSettings
 
+
 class Settings(BaseSettings):
     database_username: str
     database_password: str
@@ -15,10 +16,11 @@ class Settings(BaseSettings):
     admin_username: str
     admin_password: str
 
-    testing_admin_username: str = 'admin'
-    testing_admin_password: str = 'admin'
+    testing_admin_username: str = "admin"
+    testing_admin_password: str = "admin"
 
     class Config:
-        env_file = '.env'
+        env_file = ".env"
+
 
 settings = Settings()

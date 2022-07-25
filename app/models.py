@@ -4,36 +4,45 @@ from sqlalchemy.sql.expression import text
 from sqlalchemy.orm import relationship
 from .database import Base
 
+
 class Client(Base):
-    __tablename__ = 'clients'
+    __tablename__ = "clients"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    date_joined = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    date_joined = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
     name = Column(String, nullable=False)
     email = Column(String, unique=True, nullable=False)
     phone_number = Column(String(length=22), nullable=False)
     password = Column(String, nullable=False)
     address = Column(String, nullable=False)
 
+
 class Appointment(Base):
-    __tablename__ = 'appointments'
+    __tablename__ = "appointments"
 
     id = Column(Integer, primary_key=True, nullable=False)
     date = Column(Date, nullable=False)
-    description = Column(String, server_default='', nullable=False)
+    description = Column(String, server_default="", nullable=False)
     price = Column(Float, nullable=False)
-    paid = Column(Boolean, server_default='f', nullable=False)
+    paid = Column(Boolean, server_default="f", nullable=False)
 
-    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'), nullable=False)
-    client = relationship('Client')
+    client_id = Column(
+        Integer, ForeignKey("clients.id", ondelete="CASCADE"), nullable=False
+    )
+    client = relationship("Client")
+
 
 class Request(Base):
-    __tablename__ = 'requests'
+    __tablename__ = "requests"
 
     id = Column(Integer, primary_key=True, nullable=False)
-    date_made = Column(TIMESTAMP(timezone=True), nullable=False, server_default=text('now()'))
+    date_made = Column(
+        TIMESTAMP(timezone=True), nullable=False, server_default=text("now()")
+    )
     email = Column(String, unique=True, nullable=False)
-    description = Column(String, server_default='', nullable=False)
-    
-    client_id = Column(Integer, ForeignKey('clients.id', ondelete='CASCADE'))
-    client = relationship('Client')
+    description = Column(String, server_default="", nullable=False)
+
+    client_id = Column(Integer, ForeignKey("clients.id", ondelete="CASCADE"))
+    client = relationship("Client")
